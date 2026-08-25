@@ -11,15 +11,19 @@ body{margin:0;background:#edf8ef;font-family:sans-serif;text-align:center}
 h1{margin:7px}
 button,select{font-size:17px;padding:10px;margin:5px;border:0;border-radius:10px}
 button{background:#198448;color:#fff;font-weight:bold}
-#lifeBox{position:fixed;top:8px;left:8px;z-index:9;background:#fff;padding:7px 12px;border-radius:12px;font-size:22px}
+#lifeBox{
+ position:fixed;top:8px;left:8px;z-index:9;background:#fff;
+ padding:7px 12px;border-radius:12px;font-size:22px
+}
 #status{font-size:18px;font-weight:bold;margin:8px}
 #guide{min-height:52px;font-size:17px}
 #field{
- height:500px;position:relative;overflow:hidden;border:3px solid #62a763;
- border-radius:18px;background:linear-gradient(#bdeaff,#e9f8d4);touch-action:none
+ width:100%;height:min(500px,65vh);position:relative;overflow:hidden;
+ border:3px solid #62a763;border-radius:18px;
+ background:linear-gradient(#bdeaff,#e9f8d4);touch-action:none
 }
 #player{
- position:absolute;font-size:88px;z-index:3;touch-action:none;
+ position:absolute;font-size:70px;z-index:3;touch-action:none;
  user-select:none;-webkit-user-select:none;
  filter:drop-shadow(2px 3px 2px #777)
 }
@@ -27,10 +31,37 @@ button{background:#198448;color:#fff;font-weight:bold}
  position:absolute;font-size:45px;pointer-events:none;
  animation:fall var(--speed) linear forwards
 }
-@keyframes fall{from{top:-60px}to{top:520px}}
+@keyframes fall{from{top:-60px}to{top:110%}}
 .grow{animation:grow .5s ease}
 @keyframes grow{50%{transform:scale(1.55)}}
 .answer{background:#fff;padding:10px;border-radius:12px;margin-top:8px;line-height:1.8}
+
+/* スマホ */
+@media(max-width:600px){
+ #app{padding:6px}
+ h1{font-size:24px}
+ #status,#guide{font-size:15px}
+ #field{height:62vh;min-height:380px;border-radius:14px}
+ #player{font-size:62px}
+ .food{font-size:38px}
+ button,select{font-size:16px;padding:9px}
+ #lifeBox{font-size:18px;padding:5px 8px}
+}
+
+/* iPad */
+@media(min-width:601px) and (max-width:1024px){
+ #app{max-width:920px;padding:16px}
+ #field{height:62vh;max-height:620px}
+ #player{font-size:70px}
+ .food{font-size:48px}
+}
+
+/* 横向きスマホ */
+@media(max-height:500px) and (orientation:landscape){
+ h1{font-size:20px;margin:3px}
+ #field{height:68vh;min-height:280px}
+ #guide{min-height:30px}
+}
 </style>
 </head>
 
@@ -42,7 +73,6 @@ button{background:#198448;color:#fff;font-weight:bold}
 
 <div id="menu">
 <p>正しい餌を食べて進化しよう！</p>
-
 <label>難易度：
 <select id="difficulty">
 <option value="easy">かんたん</option>
@@ -53,7 +83,6 @@ button{background:#198448;color:#fff;font-weight:bold}
 
 <button onclick="start('forest')">🌲 森林ではじめる</button>
 <button onclick="start('water')">🌊 水界ではじめる</button>
-
 <p>正解：+10点 ／ 5匹連続正解：進化 ／ 不正解：❤️-1</p>
 </div>
 
@@ -117,12 +146,10 @@ function tone(freq,length=0.16,volume=0.08,type="sine"){
   const ctx=getAudio();
   const osc=ctx.createOscillator();
   const gain=ctx.createGain();
-
   osc.type=type;
   osc.frequency.value=freq;
   gain.gain.setValueAtTime(volume,ctx.currentTime);
   gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+length);
-
   osc.connect(gain);
   gain.connect(ctx.destination);
   osc.start();
@@ -141,10 +168,8 @@ function sound(type){
 
 function startBGM(){
  stopBGM();
-
  const melody=[262,330,392,330,294,349,440,349];
  let note=0;
-
  bgmTimer=setInterval(()=>{
   tone(melody[note],0.22,0.025,"triangle");
   note=(note+1)%melody.length;
@@ -162,7 +187,6 @@ function start(name){
 
  world=worlds[name];
  setting=settings[difficulty.value];
-
  level=0;
  correct=0;
  score=0;
@@ -172,26 +196,23 @@ function start(name){
 
  menu.hidden=true;
  play.hidden=false;
-
  player.style.display="block";
- player.style.left="340px";
- player.style.top="350px";
 
- startBGM();
  update();
 
+ requestAnimationFrame(()=>{
+  player.style.left=(field.clientWidth-player.offsetWidth)/2+"px";
+  player.style.top=(field.clientHeight-player.offsetHeight-15)+"px";
+ });
+
+ startBGM();
  spawnTimer=setInterval(spawnFood,setting.spawn);
 
  clockTimer=setInterval(()=>{
   if(!gameRunning)return;
-
   time--;
-
-  if(time<=0){
-   endGame();
-  }else{
-   update();
-  }
+  if(time<=0)endGame();
+  else update();
  },1000);
 }
 
@@ -200,7 +221,7 @@ function update(){
 
  lifeBox.textContent="❤️".repeat(life);
  status.textContent=
-  `得点：${score}点　｜　残り：${time}秒　｜　段階：${level+1}/3　｜　進化まで：${5-correct}匹`;
+ `得点：${score}点　｜　残り：${time}秒　｜　段階：${level+1}/3　｜　進化まで：${5-correct}匹`;
 
  player.textContent=world.chain[level][0];
  guide.textContent=`${world.chain[level][1]}になって、正しい餌を食べよう！`;
@@ -215,18 +236,14 @@ function spawnFood(){
 
  food.className="food";
  food.dataset.correct=isCorrect?"yes":"no";
-
- if(isCorrect){
-  food.textContent=correctFoods[Math.floor(Math.random()*correctFoods.length)];
- }else{
-  food.textContent=world.wrong[Math.floor(Math.random()*world.wrong.length)];
- }
+ food.textContent=isCorrect
+  ?correctFoods[Math.floor(Math.random()*correctFoods.length)]
+  :world.wrong[Math.floor(Math.random()*world.wrong.length)];
 
  food.style.left=(Math.random()*87)+"%";
  food.style.setProperty("--speed",setting.speed+"s");
 
  field.appendChild(food);
-
  setTimeout(()=>food.remove(),setting.speed*1000+300);
 }
 
@@ -238,9 +255,7 @@ player.addEventListener("pointerdown",event=>{
 });
 
 player.addEventListener("pointermove",event=>{
- if(dragging&&gameRunning){
-  movePlayer(event.clientX,event.clientY);
- }
+ if(dragging&&gameRunning)movePlayer(event.clientX,event.clientY);
 });
 
 player.addEventListener("pointerup",()=>dragging=false);
@@ -248,13 +263,20 @@ player.addEventListener("pointercancel",()=>dragging=false);
 
 function movePlayer(x,y){
  const rect=field.getBoundingClientRect();
+ const pRect=player.getBoundingClientRect();
 
- const left=Math.max(0,Math.min(rect.width-88,x-rect.left-42));
- const topPos=Math.max(0,Math.min(rect.height-95,y-rect.top-42));
+ const left=Math.max(0,Math.min(
+  rect.width-pRect.width,
+  x-rect.left-pRect.width/2
+ ));
+
+ const topPos=Math.max(0,Math.min(
+  rect.height-pRect.height,
+  y-rect.top-pRect.height/2
+ ));
 
  player.style.left=left+"px";
  player.style.top=topPos+"px";
-
  checkHit();
 }
 
@@ -271,7 +293,6 @@ function checkHit(){
    playerRect.bottom>foodRect.top;
 
   if(!hit)return;
-
   food.remove();
 
   if(food.dataset.correct==="yes"){
@@ -281,7 +302,6 @@ function checkHit(){
 
    if(correct>=5){
     correct=0;
-
     if(level<2){
      level++;
      player.classList.remove("grow");
@@ -300,7 +320,6 @@ function checkHit(){
     return;
    }
   }
-
   update();
  });
 }
@@ -310,19 +329,17 @@ function endGame(){
 
  gameRunning=false;
  dragging=false;
-
  clearInterval(spawnTimer);
  clearInterval(clockTimer);
  stopBGM();
 
  document.querySelectorAll(".food").forEach(food=>food.remove());
-
  player.style.display="none";
  lifeBox.textContent="";
 
- const answers=world.chain.map((item,index)=>{
-  return `段階${index+1}：${item[1]} ${item[0]} ← ${item[2].join("・")}`;
- }).join("<br>");
+ const answers=world.chain.map((item,index)=>
+  `段階${index+1}：${item[1]} ${item[0]} ← ${item[2].join("・")}`
+ ).join("<br>");
 
  guide.innerHTML=`
  <div class="answer">
